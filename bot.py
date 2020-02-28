@@ -1,4 +1,4 @@
-import discord
+import discord, os
 from discord.ext import commands
 client = commands.Bot(command_prefix='FC_', description='Your Friend')
 auth = ""
@@ -31,9 +31,11 @@ async def reloadC(ctx,arg):
 @client.command()
 async def happiness(ctx):
     await ctx.send("`Remember, happiness is mandatory`")
-    
-with open("auth.txt",'r') as authF:
-    auth = authF.read()
+if os.path.exists("auth.txt"):
+    with open("auth.txt",'r') as authF:
+        auth = authF.read()
+else:
+    auth =os.environ['AUTH_KEY']
 def setup(client):
     client.run(auth)
     
