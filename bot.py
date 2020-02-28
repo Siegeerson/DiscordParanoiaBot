@@ -18,7 +18,7 @@ async def close(ctx,*args):
 @client.command()
 async def cmess(ctx,*args):
     try:
-        ctx = client.wait_for('message',lambda(x):x.message.user.name=="siegeerson")
+        ctx = client.wait_for('message',lambda x :x.message.user.name=="siegeerson")
         await ctx.send(ctx.message)
         
     except:
