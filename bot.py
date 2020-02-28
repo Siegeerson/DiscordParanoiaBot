@@ -18,11 +18,11 @@ async def close(ctx,*args):
 @client.command()
 async def cmess(ctx,*args):
     try:
-        await ctx.send(input())
+        ctx = client.wait_for('message',lambda(x):x.message.user.name=="siegeerson")
+        await ctx.send(ctx.message)
         
     except:
-        await client.close()
-
+        await ctx.send("ERROR COMPUTER UNAVAILABLE")
 #TODO: extensions/commands can be stored in seperate file
 @client.command()
 async def reloadC(ctx,arg):
