@@ -36,6 +36,7 @@ if os.path.exists("auth.txt"):
         auth = authF.read()
 else:
     auth =os.environ['AUTH_KEY']
+    print(auth)
 def setup(client):
     client.run(auth)
     
