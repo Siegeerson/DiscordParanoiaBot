@@ -18,10 +18,14 @@ async def close(ctx,*args):
 @client.command()
 async def cmess(ctx,*args):
     try:
-        ctx = client.wait_for('message',lambda x :x.message.user.name=="siegeerson")
-        await ctx.send(ctx.message)
-        
-    except:
+        print(ctx)
+        users = ctx.message.guild.get_role(683065271774478393).members
+        for x in users:
+            await x.send("please respond to \n"+ctx.message.content)
+        nctx = await client.wait_for('message',check=lambda x :x.author in users)
+        await ctx.send(nctx.content)
+    except Exception as e:
+        print(e)
         await ctx.send("ERROR COMPUTER UNAVAILABLE")
 #TODO: extensions/commands can be stored in seperate file
 @client.command()
@@ -40,5 +44,4 @@ else:
 def setup(client):
     client.run(auth)
     
-    print("YO")
 setup(client)
