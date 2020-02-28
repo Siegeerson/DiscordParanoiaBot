@@ -40,4 +40,4 @@ def setup(client):
     client.run(auth)
     
     print("YO")
-setup()
+setup(client)
