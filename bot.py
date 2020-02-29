@@ -1,3 +1,4 @@
+#TODO:info command, wrapper arround commands to validate permission
 import discord, os
 from discord.ext import commands
 import os
@@ -22,6 +23,15 @@ async def close(ctx,*args):
    usr = ctx.message.author
    if usr.name == "siegeerson":
        await client.close()
+
+@client.command()
+async def refreshDB(ctx):
+    initializeDB(conn,ctx.guild.members)
+
+#@client.command()
+#async def fctalk(ctx,message,*):
+#    if ctx.message.user in ctx.message.guild.get_role(683065271774478393).members:
+        
 
 
 @client.command()
