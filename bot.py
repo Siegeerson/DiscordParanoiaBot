@@ -47,6 +47,7 @@ async def cmess(ctx,*args):
         print(e)
         await ctx.send("ERROR COMPUTER UNAVAILABLE")
 
+
 #TODO: extensions/commands can be stored in seperate file
 @client.command()
 async def reloadC(ctx,arg):
@@ -56,7 +57,9 @@ async def reloadC(ctx,arg):
 async def happiness(ctx):
     await ctx.send("`Remember, happiness is mandatory`")
 
-
+@client.command()
+async def mod_clone(ctx,name):
+    await modify_table(ctx,name,"user_clone",1)
 @client.command()
 async def mod_treason(ctx,name,value="1"):
     await modify_table(ctx,name,"user_treason",value)
@@ -74,12 +77,12 @@ async def pinfo(ctx, name=""):
     if name=="":
         name = ctx.message.author.name
     cur = conn.cursor()
-    cur.execute("select user_name,user_xpp,user_treason,user_clearence from users where user_name='"+name+"';")
+    cur.execute("select user_name,user_xpp,user_treason,user_clearence,user_clone from users where user_name='"+name+"';")
     column_names = [desc[0] for desc in cur.description]
-    line1 = "`{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
+    line1 = "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
     out = cur.fetchone()
     if out:
-        line2 =line1+"\n"+ "`{:<15}{:<15}{:<15}{:<15}`".format(*out)
+        line2 =line1+"\n"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
         await ctx.send(line2)
     else:
         await ctx.send("**NO CLONE BY THAT NAME**")
@@ -110,8 +113,8 @@ def initializeDB(conn,membs):
 def print_usr_data(cur):
     cur.execute("select * from users;")
     column_names = [desc[0] for desc in cur.description]
-    print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}".format(*column_names))
-    [print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}".format(*x)) for x in cur.fetchall()]
+    print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}{:<20}".format(*column_names))
+    [print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}{:<20}".format(*x)) for x in cur.fetchall()]
     
 
 if os.path.exists("auth.txt"):
