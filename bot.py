@@ -52,14 +52,19 @@ else:
     auth =os.environ['AUTH_KEY']
     print(auth)
 
+#make a more modular function -> pass name of column to mod into method
 @client.command()
-async def inc_treason(ctx,name):
+async def mod_treason(ctx,name,value="1"):
     cur = conn.cursor()
     cur.execute("select user_name,user_treason from users where user_name=\'"+name+"\';")
     user = cur.fetchone()
+    try:
+        value = int(value)
+    except:
+        value = 1
     if user:
-        await ctx.send(f"**Treason of {user[0]} goes from {user[1]} to {user[1]+1}**")
-        cur.execute("Update users set user_treason=(%s) where user_name=(%s);",(user[1]+1,user[0]))
+        await ctx.send(f"**Treason of {user[0]} goes from {user[1]} to {user[1]+value}**")
+        cur.execute("Update users set user_treason=(%s) where user_name=(%s);",(user[1]+value,user[0]))
         conn.commit()
         print_usr_data(cur)
     
