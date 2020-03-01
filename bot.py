@@ -118,7 +118,7 @@ async def pinfo(ctx, name=""):
     line1 = "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
     out = cur.fetchone()
     if out:
-        line2 =line1+"\bn"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
+        line2 =line1+"\n"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
         await ctx.send(line2)
     else:
         await ctx.send("**NO CLONE BY THAT NAME**")
