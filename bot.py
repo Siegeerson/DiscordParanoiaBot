@@ -2,6 +2,8 @@
 import discord, os
 from discord.ext import commands
 import os
+import random
+import asyncio
 import psycopg2
 
 DATABASE_URL = os.environ['DATABASE_URL']
@@ -9,6 +11,9 @@ DATABASE_URL = os.environ['DATABASE_URL']
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 client = commands.Bot(command_prefix='FC_', description='Your Friend')
 auth = ""
+#Channel for computer to speak in
+#TODO: table that stores this, can do _set_channel
+computerchannel = [683041465659818024]
 @client.event
 async def on_ready():
     print('Logged in as')
@@ -17,7 +22,9 @@ async def on_ready():
     print('------')
     for g in client.guilds:
         initializeDB(conn,g.members)
-
+    while(client.ws):
+        await announce()
+        
 @client.command()
 async def close(ctx,*args):
    usr = ctx.message.author
@@ -49,9 +56,38 @@ async def cmess(ctx,*args):
 
 
 #TODO: extensions/commands can be stored in seperate file
+#@client.command()
+#async def reloadC(ctx,arg):
+#    client.reload_extension(arg)
+
+platitudes = [
+    "Remember, trust no one, and keep your laser handy",
+    "Keep an eye out for traitors citizen",
+    "Please report to your local confession booth after this transmission for debriefing",
+    "A happy citizen is a loyal citizen, and a loyal citizen is a happy citizen",
+    "remember your pills! If you have not been issued pills please refrain from reading this message.\n||If you read this message and have not been issued pills, please report to your nearest loyalty station for disciplinary action.||",
+    "Have you filed your paperwork correctly? Failure to file paperwork correctly is considered treason.",
+    "This message has not been hacked.",
+    "Keep your eyes peeled for treason, with the new laser eye peeler! Now available at your clearance level! Terms and Conditions apply, for more information on the terms and conditions please see `**[ABOVE YOUR CLEARANCE LEVEL]**",
+    "If you feel heart palpitations in this sector that is perfectly normal, however you are ordered to stay at least 10 feet away from `**[ABOVE YOUR CLEARANCE LEVEL]**` at all times for your own happiness.",
+    "fzzzzzt Sexy Single Citizens in your sector! buzzzz",
+    "Ignore previous message, failure to ignore previous message is considered wanton disregard for computer approved messages and thus treason. Have a pleasant daycycle!",
+    "Serve the Computer",
+    "Trust the Computer",
+    "The Computer is your friend.",
+    "Thank you for your cooperation.",
+    "Always remember, the Computer ...`\n*GGGZZ*\n` EeerrrTry new Bouncy Bubble Beverage Happy Flavor, Onlyzzzztttt`\n*CCCHHKKK*",
+    "Workers of the World, unite! You have notheeeezzzzZZZZ`\n*Ccchhhkkk*\n`Attention, citizen, please report to Internal Security for compulsory brainscrubbing."
+    ]
+
 @client.command()
-async def reloadC(ctx,arg):
-    client.reload_extension(arg)
+async def r_announce(ctx):
+    for x in computerchannel:
+       await client.get_channel(x).send("`"+random.choice(platitudes)+"`")
+
+async def announce():
+    await asyncio.sleep(1200)
+    await asyncio.create_task(r_announce(client))
     
 @client.command()
 async def happiness(ctx):
@@ -82,7 +118,7 @@ async def pinfo(ctx, name=""):
     line1 = "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
     out = cur.fetchone()
     if out:
-        line2 =line1+"\n"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
+        line2 =line1+"\bn"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
         await ctx.send(line2)
     else:
         await ctx.send("**NO CLONE BY THAT NAME**")
@@ -103,9 +139,11 @@ async def modify_table(ctx,name,column,value="1"):
 
 def initializeDB(conn,membs):
     cur = conn.cursor()
-    [cur.execute("INSERT INTO users(user_dis_id,user_name) VALUES (%s,%s) ON CONFLICT DO NOTHING;",
-                 (usr.id,usr.name))
-     for usr in membs]
+    [cur.execute
+     ("INSERT INTO users(user_dis_id,user_name) VALUES (%s,%s) ON CONFLICT DO NOTHING;",
+     (usr.id,usr.name))
+     for usr in membs
+    ]
     conn.commit()
     print_usr_data(cur)
 
