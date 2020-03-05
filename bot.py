@@ -55,10 +55,6 @@ async def cmess(ctx,*args):
         await ctx.send("ERROR COMPUTER UNAVAILABLE")
 
 
-#TODO: extensions/commands can be stored in seperate file
-#@client.command()
-#async def reloadC(ctx,arg):
-#    client.reload_extension(arg)
 
 platitudes = [
     "Remember, trust no one, and keep your laser handy",
@@ -83,11 +79,12 @@ platitudes = [
 @client.command()
 async def r_announce(ctx):
     for x in computerchannel:
-       await client.get_channel(x).send("`"+random.choice(platitudes)+"`")
+       await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
 
 async def announce():
-    await asyncio.sleep(1200)
-    await asyncio.create_task(r_announce(client))
+        await asyncio.create_task(r_announce(client))
+        await asyncio.sleep(1200)
+
     
 @client.command()
 async def happiness(ctx):
@@ -96,6 +93,7 @@ async def happiness(ctx):
 @client.command()
 async def mod_clone(ctx,name):
     await modify_table(ctx,name,"user_clone",1)
+    
 @client.command()
 async def mod_treason(ctx,name,value="1"):
     await modify_table(ctx,name,"user_treason",value)
@@ -152,8 +150,7 @@ def print_usr_data(cur):
     cur.execute("select * from users;")
     column_names = [desc[0] for desc in cur.description]
     print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}{:<20}".format(*column_names))
-    [print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}{:<20}".format(*x)) for x in cur.fetchall()]
-    
+    [print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}{:<20}".format(*x)) for x in cur.fetchall()]    
 
 if os.path.exists("auth.txt"):
     with open("auth.txt",'r') as authF:
