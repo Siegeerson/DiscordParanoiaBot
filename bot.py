@@ -77,7 +77,7 @@ platitudes = [
 @client.command()
 async def r_announce(ctx):
     for x in computerchannel:
-       await client.get_channel(x).send("`\n"+platitudes[4]+"\n`")
+       await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
 
 async def announce():
         await asyncio.create_task(r_announce(client))
