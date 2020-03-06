@@ -3,6 +3,7 @@ import discord, os,psycopg2
 from discord.ext import commands
 import random
 import asyncio
+from gtts import gTTS
 
 DATABASE_URL = os.environ['DATABASE_URL']
 
@@ -30,13 +31,30 @@ async def close(ctx,*args):
        await client.close()
 
 @client.command()
+async def join(ctx):
+    try:
+        voiceC = ctx.author.voice
+        if voiceC:
+            await voiceC.channel.connect()
+    except:
+        await ctx.send("Must call this command from a server")
+
+@client.command()
+async def leave(ctx):
+    if ctx.guild and ctx.guild.voice_client:
+        await ctx.guild.voice_client.disconnect()
+
+@client.command()
+async def say(ctx,*,message):
+    if ctx.guild and ctx.guild.voice_client:
+        gTTS(message).save("computer_voice.mp3")
+        ctx.guild.voice_client.play(discord.FFmpegPCMAudio("computer_voice.mp3"))
+        return True
+    return False
+            
+@client.command()
 async def refreshDB(ctx):
     initializeDB(conn,ctx.guild.members)
-
-#@client.command()
-#async def fctalk(ctx,message,*):
-#    if ctx.message.user in ctx.message.guild.get_role(683065271774478393).members:
-        
 
 
 @client.command()
@@ -77,7 +95,8 @@ platitudes = [
 @client.command()
 async def r_announce(ctx):
     for x in computerchannel:
-       await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
+        f
+        await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
 
 async def announce():
         await asyncio.create_task(r_announce(client))
@@ -86,8 +105,10 @@ async def announce():
     
 @client.command()
 async def happiness(ctx):
-    await ctx.send("`Remember, happiness is mandatory`")
-
+    is_said = await say(ctx,message="Remember, happiness is mandatory")
+    if not is_said:
+        await ctx.send("`Remember, happiness is mandatory`")
+    
 @client.command()
 async def mod_clone(ctx,name):
     await modify_table(ctx,name,"user_clone",1)
