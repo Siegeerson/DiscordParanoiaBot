@@ -59,7 +59,7 @@ platitudes = [
     "Keep an eye out for traitors citizen",
     "Please report to your local confession booth after this transmission for debriefing",
     "A happy citizen is a loyal citizen, and a loyal citizen is a happy citizen",
-    "remember your pills! If you have not been issued pills please refrain from reading this message.\n||If you read this message and have not been issued pills, please report to your nearest loyalty station for disciplinary action.||",
+    "remember your pills! If you have not been issued pills please refrain from reading this message.\n`||If you read this message and have not been issued pills, please report to your nearest loyalty station for disciplinary action.||`",
     "Have you filed your paperwork correctly? Failure to file paperwork correctly is considered treason.",
     "This message has not been hacked.",
     "Keep your eyes peeled for treason, with the new laser eye peeler! Now available at your clearance level! Terms and Conditions apply, for more information on the terms and conditions please see `**[ABOVE YOUR CLEARANCE LEVEL]**",
@@ -77,7 +77,7 @@ platitudes = [
 @client.command()
 async def r_announce(ctx):
     for x in computerchannel:
-       await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
+       await client.get_channel(x).send("`\n"+platitudes[4]+"\n`")
 
 async def announce():
         await asyncio.create_task(r_announce(client))
