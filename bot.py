@@ -95,7 +95,6 @@ platitudes = [
 @client.command()
 async def r_announce(ctx):
     for x in computerchannel:
-        f
         await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
 
 async def announce():
