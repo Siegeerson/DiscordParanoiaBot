@@ -136,7 +136,7 @@ async def ainfo(ctx,*,name):
         await ctx.send(astring)
     else:
         await ctx.send("`No such action`")
-    
+
     
 async def modify_table(ctx,name,column,value="1"):
     cur = conn.cursor()
