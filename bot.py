@@ -1,8 +1,7 @@
 #TODO:info command, wrapper arround commands to validate permission
-import discord, os,psycopg2
+#Fix sql commands to correctly pass in strings using additional arguments --> arguments passed in need to be in a list
+import discord, os, psycopg2,random, asyncio
 from discord.ext import commands
-import random
-import asyncio
 from gtts import gTTS
 
 DATABASE_URL = os.environ['DATABASE_URL']
@@ -21,14 +20,12 @@ async def on_ready():
     print('------')
     for g in client.guilds:
         initializeDB(conn,g.members)
-    while(client.ws):
-        await announce()
         
 @client.command()
 async def close(ctx,*args):
-   usr = ctx.message.author
-   if usr.name == "siegeerson":
-       await client.close()
+    usr = ctx.message.author
+    if usr.name == "siegeerson":
+        await client.close()
 
 @client.command()
 async def join(ctx):
@@ -51,7 +48,7 @@ async def say(ctx,*,message):
         ctx.guild.voice_client.play(discord.FFmpegPCMAudio("computer_voice.mp3"))
         return True
     return False
-            
+
 @client.command()
 async def refreshDB(ctx):
     initializeDB(conn,ctx.guild.members)
@@ -64,8 +61,8 @@ async def cmess(ctx,*args):
         users = ctx.message.guild.get_role(683065271774478393).members
         for x in users:
             await x.send("please respond to \n"+ctx.message.content)
-        nctx = await client.wait_for('message',check=lambda x :x.author in users)
-        await ctx.send(nctx.content)
+            nctx = await client.wait_for('message',check=lambda x :x.author in users)
+            await ctx.send(nctx.content)
     except Exception as e:
         print(e)
         await ctx.send("ERROR COMPUTER UNAVAILABLE")
@@ -90,7 +87,7 @@ platitudes = [
     "Thank you for your cooperation.",
     "Always remember, the Computer ...`\n*GGGZZ*\n` EeerrrTry new Bouncy Bubble Beverage Happy Flavor, Onlyzzzztttt`\n*CCCHHKKK*",
     "Workers of the World, unite! You have notheeeezzzzZZZZ`\n*Ccchhhkkk*\n`Attention, citizen, please report to Internal Security for compulsory brainscrubbing."
-    ]
+]
 
 @client.command()
 async def r_announce(ctx):
@@ -98,8 +95,8 @@ async def r_announce(ctx):
         await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
 
 async def announce():
-        await asyncio.create_task(r_announce(client))
-        await asyncio.sleep(1200)
+    await asyncio.create_task(r_announce(client))
+    await asyncio.sleep(1200)
 
     
 @client.command()
@@ -107,7 +104,7 @@ async def happiness(ctx):
     is_said = await say(ctx,message="Remember, happiness is mandatory")
     if not is_said:
         await ctx.send("`Remember, happiness is mandatory`")
-    
+        
 @client.command()
 async def mod_clone(ctx,name):
     await modify_table(ctx,name,"user_clone",1)
@@ -128,11 +125,11 @@ async def mod_clearence(ctx,name,value):
 async def pinfo(ctx, name=""):
     if name=="":
         name = ctx.message.author.name
-    cur = conn.cursor()
-    cur.execute("select user_name,user_xpp,user_treason,user_clearence,user_clone from users where user_name='"+name+"';")
-    column_names = [desc[0] for desc in cur.description]
-    line1 = "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
-    out = cur.fetchone()
+        cur = conn.cursor()
+        cur.execute("select user_name,user_xpp,user_treason,user_clearence,user_clone from users where user_name='"+name+"';")
+        column_names = [desc[0] for desc in cur.description]
+        line1 = "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
+        out = cur.fetchone()
     if out:
         line2 =line1+"\n"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
         await ctx.send(line2)
@@ -145,6 +142,24 @@ async def list_acts(ctx):
     cur.execute("select action_name from actions;")
     await ctx.send("\n".join(["`"+x[0]+"`" for x in cur.fetchall()]))
 
+
+@client.command()
+async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
+    if ctx.guild:
+        cur = conn.cursor()
+        #NOTE: not futureproof -> if more cards requested than available then this breaks
+        cur.execute("select action_name,action_order,action_desc from actions order by random();")
+        for name in names:
+            output = []
+            output.append("\n\n_**Your new hand is:**_")
+            for x in range(4):
+                output.append("{:->60}".format(""))
+                action  = cur.fetchone()
+                action_body = action[2].replace("\\n","\n")
+                astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\n{action_body}\n"
+                output.append(astring)
+            await name.send("\n".join(output))
+    
 @client.command()
 async def ainfo(ctx,*,name):
     cur = conn.cursor()

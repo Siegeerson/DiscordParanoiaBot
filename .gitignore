@@ -1,3 +1,5 @@
 bot-env/*
 auth.txt
 *.mp3
+ibm_auth.txt
+voice_samples/*
