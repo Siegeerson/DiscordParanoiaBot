@@ -1,4 +1,5 @@
-#TODO:info command, wrapper arround commands to validate permission
+#TODO:info command, wrapper arround commands to validate permission --> use checks
+#Todo:use better TODO structure
 #Fix sql commands to correctly pass in strings using additional arguments --> arguments passed in need to be in a list
 import discord, os, psycopg2,random, asyncio
 from discord.ext import commands
@@ -7,7 +8,7 @@ from gtts import gTTS
 DATABASE_URL = os.environ['DATABASE_URL']
 
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-client = commands.Bot(command_prefix='FC_', description='Your Friend')
+client = commands.Bot(command_prefix='FC_', description='Your Friend, ')
 auth = ""
 #Channel for computer to speak in
 #TODO: table that stores this, can do _set_channel
@@ -21,13 +22,13 @@ async def on_ready():
     for g in client.guilds:
         initializeDB(conn,g.members)
         
-@client.command()
+@client.command(hidden=True)
 async def close(ctx,*args):
     usr = ctx.message.author
     if usr.name == "siegeerson":
         await client.close()
 
-@client.command()
+@client.command(brief="Join a voice channel")
 async def join(ctx):
     try:
         voiceC = ctx.author.voice
@@ -36,12 +37,12 @@ async def join(ctx):
     except:
         await ctx.send("Must call this command from a server")
 
-@client.command()
+@client.command(brief="Disconnect from a voice channel")
 async def leave(ctx):
     if ctx.guild and ctx.guild.voice_client:
         await ctx.guild.voice_client.disconnect()
 
-@client.command()
+@client.command(hidden=True)
 async def say(ctx,*,message):
     if ctx.guild and ctx.guild.voice_client:
         gTTS(message).save("computer_voice.mp3")
@@ -49,20 +50,21 @@ async def say(ctx,*,message):
         return True
     return False
 
-@client.command()
+@client.command(hidden=True)
 async def refreshDB(ctx):
     initializeDB(conn,ctx.guild.members)
 
 
-@client.command()
+@client.command(brief="talk directly to the computer")
 async def cmess(ctx,*args):
     try:
         print(ctx)
         users = ctx.message.guild.get_role(683065271774478393).members
         for x in users:
             await x.send("please respond to \n"+ctx.message.content)
-            nctx = await client.wait_for('message',check=lambda x :x.author in users)
-            await ctx.send(nctx.content)
+        nctx = await client.wait_for('message',check=lambda x :x.author in users)
+        if not await say(ctx,message=nctx.content):
+           await ctx.send("**"+nctx.content+"**")
     except Exception as e:
         print(e)
         await ctx.send("ERROR COMPUTER UNAVAILABLE")
@@ -89,7 +91,7 @@ platitudes = [
     "Workers of the World, unite! You have notheeeezzzzZZZZ`\n*Ccchhhkkk*\n`Attention, citizen, please report to Internal Security for compulsory brainscrubbing."
 ]
 
-@client.command()
+@client.command(brief="Send out a computer mandated announcement")
 async def r_announce(ctx):
     for x in computerchannel:
         await client.get_channel(x).send("`\n"+random.choice(platitudes)+"\n`")
@@ -99,29 +101,29 @@ async def announce():
     await asyncio.sleep(1200)
 
     
-@client.command()
+@client.command(brief="let everyone know how happy they are")
 async def happiness(ctx):
     is_said = await say(ctx,message="Remember, happiness is mandatory")
     if not is_said:
         await ctx.send("`Remember, happiness is mandatory`")
         
-@client.command()
+@client.command(hidden=True)
 async def mod_clone(ctx,name):
     await modify_table(ctx,name,"user_clone",1)
     
-@client.command()
+@client.command(hidden=True)
 async def mod_treason(ctx,name,value="1"):
     await modify_table(ctx,name,"user_treason",value)
 
-@client.command()
+@client.command(hidden=True)
 async def mod_xp(ctx,name,value):
     await modify_table(ctx,name,"user_xpp",value)
 
-@client.command()
+@client.command(hidden=True)
 async def mod_clearence(ctx,name,value):
     await modify_table(ctx,name,"user_clearence",value)
 
-@client.command()
+@client.command(brief="See stats about yourself")
 async def pinfo(ctx, name=""):
     if name=="":
         name = ctx.message.author.name
@@ -183,19 +185,19 @@ def setup(client):
 
 #ACTION CARD COMMANDS --> TODO:move to seperate file
 #TODO: Add commands for equipment, mutant powers, ect
-@client.command()
+@client.command(brief="List all actions")
 async def list_acts(ctx):
     cur = conn.cursor()
     cur.execute("select action_name from actions;")
     await ctx.send("\n".join(["`"+x[0]+"`" for x in cur.fetchall()]))
 
 
-@client.command()
+@client.command(brief="Give everyone mentioned 4 action cards")
 async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
     if ctx.guild:
         cur = conn.cursor()
         #NOTE: not futureproof -> if more cards requested than available then this breaks
-        cur.execute("select action_name,action_order,action_desc from actions order by random();")
+        cur.execute("select action_name,action_order,action_desc,action_reaction from actions order by random();")
         for name in names:
             output = []
             output.append("\n\n_**Your new hand is:**_")
@@ -203,29 +205,30 @@ async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
                 output.append("{:->60}".format(""))
                 action  = cur.fetchone()
                 action_body = action[2].replace("\\n","\n")
-                astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\n{action_body}\n"
+                astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\nReaction?: {action[3]}\n{action_body}\n"
                 output.append(astring)
             await name.send("\n".join(output))
-    
-@client.command()
+
+#TODO: generalize the listing and info commands 
+@client.command(brief="Get info about a specific action card")
 async def ainfo(ctx,*,name):
     cur = conn.cursor()
-    cur.execute(f"select action_name,action_order,action_desc from actions where action_name='{name}'")
+    cur.execute(f"select action_name,action_order,action_desc,action_reaction from actions where action_name='{name}'")
     action = cur.fetchone()
     if action:
         action_body = action[2].replace("\\n","\n")
-        astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\n{action_body}\n"
+        astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\nReaction?: {action[3]}\n{action_body}\n"
         await ctx.send(astring)
     else:
         await ctx.send("`No such action`")
 
-@client.command()
+@client.command(brief="List all known pieces of equipment")
 async def list_equips(ctx):
     cur = conn.cursor()
     cur.execute("select equip_name from equipment;")
     await ctx.send("\n".join(["`"+x[0]+"`" for x in cur.fetchall()]))
 
-@client.command()
+@client.command(brief="Get info about a specific piece of equipment")
 async def einfo(ctx,*,name):
     cur = conn.cursor()
     cur.execute(f"select * from equipment where equip_name='{name}'")
