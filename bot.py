@@ -136,42 +136,6 @@ async def pinfo(ctx, name=""):
     else:
         await ctx.send("**NO CLONE BY THAT NAME**")
 
-@client.command()
-async def list_acts(ctx):
-    cur = conn.cursor()
-    cur.execute("select action_name from actions;")
-    await ctx.send("\n".join(["`"+x[0]+"`" for x in cur.fetchall()]))
-
-
-@client.command()
-async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
-    if ctx.guild:
-        cur = conn.cursor()
-        #NOTE: not futureproof -> if more cards requested than available then this breaks
-        cur.execute("select action_name,action_order,action_desc from actions order by random();")
-        for name in names:
-            output = []
-            output.append("\n\n_**Your new hand is:**_")
-            for x in range(4):
-                output.append("{:->60}".format(""))
-                action  = cur.fetchone()
-                action_body = action[2].replace("\\n","\n")
-                astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\n{action_body}\n"
-                output.append(astring)
-            await name.send("\n".join(output))
-    
-@client.command()
-async def ainfo(ctx,*,name):
-    cur = conn.cursor()
-    cur.execute(f"select action_name,action_order,action_desc from actions where action_name='{name}'")
-    action = cur.fetchone()
-    if action:
-        action_body = action[2].replace("\\n","\n")
-        astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\n{action_body}\n"
-        await ctx.send(astring)
-    else:
-        await ctx.send("`No such action`")
-
     
 async def modify_table(ctx,name,column,value="1"):
     cur = conn.cursor()
@@ -214,5 +178,64 @@ else:
 def setup(client):
     client.run(auth)
     
+
+
+
+#ACTION CARD COMMANDS --> TODO:move to seperate file
+#TODO: Add commands for equipment, mutant powers, ect
+@client.command()
+async def list_acts(ctx):
+    cur = conn.cursor()
+    cur.execute("select action_name from actions;")
+    await ctx.send("\n".join(["`"+x[0]+"`" for x in cur.fetchall()]))
+
+
+@client.command()
+async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
+    if ctx.guild:
+        cur = conn.cursor()
+        #NOTE: not futureproof -> if more cards requested than available then this breaks
+        cur.execute("select action_name,action_order,action_desc from actions order by random();")
+        for name in names:
+            output = []
+            output.append("\n\n_**Your new hand is:**_")
+            for x in range(4):
+                output.append("{:->60}".format(""))
+                action  = cur.fetchone()
+                action_body = action[2].replace("\\n","\n")
+                astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\n{action_body}\n"
+                output.append(astring)
+            await name.send("\n".join(output))
     
+@client.command()
+async def ainfo(ctx,*,name):
+    cur = conn.cursor()
+    cur.execute(f"select action_name,action_order,action_desc from actions where action_name='{name}'")
+    action = cur.fetchone()
+    if action:
+        action_body = action[2].replace("\\n","\n")
+        astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\n{action_body}\n"
+        await ctx.send(astring)
+    else:
+        await ctx.send("`No such action`")
+
+@client.command()
+async def list_equips(ctx):
+    cur = conn.cursor()
+    cur.execute("select equip_name from equipment;")
+    await ctx.send("\n".join(["`"+x[0]+"`" for x in cur.fetchall()]))
+
+@client.command()
+async def einfo(ctx,*,name):
+    cur = conn.cursor()
+    cur.execute(f"select * from equipment where equip_name='{name}'")
+    action = cur.fetchone()
+    if action:
+        action_body = action[5].replace("\\n","\n")
+        astring = f"\n**{action[1]}**\nEquipment Size: {str(action[2])}\nEquipment Level: {action[3]}\nAction Order: {action[4]}\n `{action_body}`\n"
+        await ctx.send(astring)
+    else:
+        await ctx.send(f"`ERROR:Equipment {name} not found`")
+    
+
 setup(client)
