@@ -43,11 +43,12 @@ class Users(commands.Cog):
         cur = self.db_connection.cursor()
         cur.execute("select user_name,user_xpp,user_treason,user_clearence,user_clone from users where user_dis_id=%s;",[str(name.id)])
         column_names = [desc[0] for desc in cur.description]
-        line1 = "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
         out = cur.fetchone()
+        e = discord.Embed()
         if out:
-            line2 =line1+"\n"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
-            await ctx.send(line2)
+            for x in range(len(column_names)):
+                e.add_field(name=("**"+column_names[x]+"**"),value=out[x])
+            await ctx.send(embed=e)
         else:
             await ctx.send("**NO CLONE BY THAT NAME**")
 

@@ -5,7 +5,7 @@ import discord, os, psycopg2,random, asyncio
 from discord.ext import commands
 from gtts import gTTS
 from user_commands import Users
-
+from bot_dice import Dice
 DATABASE_URL = os.environ['DATABASE_URL']
 
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
@@ -105,68 +105,6 @@ async def happiness(ctx):
     if not is_said:
         await ctx.send("`Remember, happiness is mandatory`")
         
-# @client.command(hidden=True)
-# async def mod_clone(ctx,name):
-#     await modify_table(ctx,name,"user_clone",1)
-    
-# @client.command(hidden=True)
-# async def mod_treason(ctx,name,value="1"):
-#     await modify_table(ctx,name,"user_treason",value)
-
-# @client.command(hidden=True)
-# async def mod_xp(ctx,name,value):
-#     await modify_table(ctx,name,"user_xpp",value)
-
-# @client.command(hidden=True)
-# async def mod_clearence(ctx,name,value):
-#     await modify_table(ctx,name,"user_clearence",value)
-
-# @client.command(brief="See stats about yourself")
-# async def pinfo(ctx, name=""):
-#     if name=="":
-#         name = ctx.message.author.name
-#         cur = conn.cursor()
-#         cur.execute("select user_name,user_xpp,user_treason,user_clearence,user_clone from users where user_name='"+name+"';")
-#         column_names = [desc[0] for desc in cur.description]
-#         line1 = "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*column_names)
-#         out = cur.fetchone()
-#     if out:
-#         line2 =line1+"\n"+ "`{:<15}{:<15}{:<15}{:<15}{:<15}`".format(*out)
-#         await ctx.send(line2)
-#     else:
-#         await ctx.send("**NO CLONE BY THAT NAME**")
-
-    
-# async def modify_table(ctx,name,column,value="1"):
-#     cur = conn.cursor()
-#     cur.execute("select user_name,"+column+" from users where user_name=\'"+name+"\';")
-#     user = cur.fetchone()
-#     try:
-#         value = int(value)
-#     except:
-#         value = 1
-#     if user:
-#         await ctx.send(f"**{column} of {user[0]} goes from {user[1]} to {user[1]+value}**")
-#         cur.execute("Update users set "+column+"=(%s) where user_name=(%s);",(user[1]+value,user[0]))
-#         conn.commit()
-#         print_usr_data(cur)
-
-# def initializeDB(conn,membs):
-#     cur = conn.cursor()
-#     [cur.execute
-#      ("INSERT INTO users(user_dis_id,user_name) VALUES (%s,%s) ON CONFLICT DO NOTHING;",
-#      (usr.id,usr.name))
-#      for usr in membs
-#     ]
-#     conn.commit()
-#     print_usr_data(cur)
-
-    
-# def print_usr_data(cur):
-#     cur.execute("select * from users;")
-#     column_names = [desc[0] for desc in cur.description]
-#     print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}{:<20}".format(*column_names))
-#     [print("{:<10}{:<25}{:<20}{:<20}{:<20}{:<20}{:<20}".format(*x)) for x in cur.fetchall()]    
 
 if os.path.exists("auth.txt"):
     with open("auth.txt",'r') as authF:
@@ -177,6 +115,8 @@ else:
 
 def setup(client):
     client.add_cog(Users(client,conn))
+    client.add_cog(Dice(client))
+    print(client.get_cog('Dice'))
     client.run(auth)
     
 
@@ -190,7 +130,15 @@ async def list_acts(ctx):
     cur.execute("select action_name from actions;")
     await ctx.send("\n".join(["`"+x[0]+"`" for x in cur.fetchall()]))
 
-
+def make_action_embed(d_response):
+    e = discord.Embed(title=("**"+d_response[0]+"**"))
+    yn = ["No","Yes"]
+    e.add_field(name="Action Order",value=d_response[1],inline=False)
+    e.add_field(name="Reaction?",value=yn[d_response[3]],inline=False)
+    e.add_field(name="Effect",value=d_response[2].replace("\\n","\n"),inline=False)
+    return e
+        
+    
 @client.command(brief="Give everyone mentioned 4 action cards")
 async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
     if ctx.guild:
@@ -198,16 +146,8 @@ async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
         #NOTE: not futureproof -> if more cards requested than available then this breaks
         cur.execute("select action_name,action_order,action_desc,action_reaction from actions order by random();")
         for name in names:
-            output = []
-            output.append("\n\n_**Your new hand is:**_")
-            for x in range(4):
-                output.append("{:->60}".format(""))
-                action  = cur.fetchone()
-                action_body = action[2].replace("\\n","\n")
-                astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\nReaction?: {action[3]}\n{action_body}\n"
-                output.append(astring)
-            await name.send("\n".join(output))
-
+            [await name.send(embed=make_action_embed(cur.fetchone())) for x in range(4)]
+            
 #TODO: generalize the listing and info commands 
 @client.command(brief="Get info about a specific action card")
 async def ainfo(ctx,*,name):
@@ -215,9 +155,7 @@ async def ainfo(ctx,*,name):
     cur.execute(f"select action_name,action_order,action_desc,action_reaction from actions where action_name='{name}'")
     action = cur.fetchone()
     if action:
-        action_body = action[2].replace("\\n","\n")
-        astring = f"\n**{action[0]}**\nAction Order: {str(action[1])}\nReaction?: {action[3]}\n{action_body}\n"
-        await ctx.send(astring)
+        await ctx.send(embed=make_action_embed(action))
     else:
         await ctx.send("`No such action`")
 
