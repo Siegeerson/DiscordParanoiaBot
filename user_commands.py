@@ -13,7 +13,7 @@ class Users(commands.Cog):
             membs = ctx.guild.members
             cur = self.db_connection.cursor()
             [cur.execute
-             ("INSERT INTO users(user_dis_id,user_name) VALUES (%s,%s) ON CONFLICT DO NOTHING;",
+             ("INSERT INTO users(user_dis_id,user_name) VALUES (%s,%s) ON CONFLICT DO UPDATE;",
               (usr.id,usr.name))
              for usr in membs
             ]
@@ -32,6 +32,7 @@ class Users(commands.Cog):
     async def mod_xp(self,ctx,name : discord.User ,value):
         await self.modify_table(ctx,name,"user_xpp",value)
 
+    #TODO, change name color to match
     @commands.command(hidden=True)
     async def mod_clearence(self,ctx,name : discord.User,value):
         await self.modify_table(ctx,name,"user_clearence",value)

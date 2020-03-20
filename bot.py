@@ -6,10 +6,12 @@ from discord.ext import commands
 from gtts import gTTS
 from user_commands import Users
 from bot_dice import Dice
+from bot_mutant import Mutations
 DATABASE_URL = os.environ['DATABASE_URL']
 
 conn = psycopg2.connect(DATABASE_URL, sslmode='require')
 client = commands.Bot(command_prefix='FC_', description='Your Friend, ')
+EXIT_EMOJI = '\U0000274C'
 auth = ""
 #Channel for computer to speak in
 #TODO: table that stores this, can do _set_channel
@@ -21,7 +23,12 @@ async def on_ready():
     print(client.user.id)
     print('------')
 
-        
+#remove used action cards
+@client.event
+async def on_reaction_add(reaction,user):
+    if user!=client.user and reaction.message.embeds and reaction.message.author == client.user and reaction.emoji ==EXIT_EMOJI:
+        await reaction.message.delete()
+            
 @client.command(hidden=True)
 async def close(ctx,*args):
     usr = ctx.message.author
@@ -116,7 +123,7 @@ else:
 def setup(client):
     client.add_cog(Users(client,conn))
     client.add_cog(Dice(client))
-    print(client.get_cog('Dice'))
+    client.add_cog(Mutations(client,conn))
     client.run(auth)
     
 
@@ -142,12 +149,20 @@ def make_action_embed(d_response):
 @client.command(brief="Give everyone mentioned 4 action cards")
 async def deal_acts(ctx, names: commands.Greedy[discord.Member]):
     if ctx.guild:
-        cur = conn.cursor()
-        #NOTE: not futureproof -> if more cards requested than available then this breaks
-        cur.execute("select action_name,action_order,action_desc,action_reaction from actions order by random();")
         for name in names:
-            [await name.send(embed=make_action_embed(cur.fetchone())) for x in range(4)]
+            await draw_acts(name,4)
             
+@client.command(brief="Draw any number of cards")
+async def draw_acts(ctx,number=0):
+    if number<=0:
+        await ctx.send("Please specify a number")
+        return
+    cur = conn.cursor()
+    cur.execute("select action_name,action_order,action_desc,action_reaction from actions order by random();")    
+    for x in range(number):
+        action_m = await ctx.send(embed=make_action_embed(cur.fetchone()))
+        await action_m.add_reaction(EXIT_EMOJI)
+     
 #TODO: generalize the listing and info commands 
 @client.command(brief="Get info about a specific action card")
 async def ainfo(ctx,*,name):
@@ -155,7 +170,8 @@ async def ainfo(ctx,*,name):
     cur.execute(f"select action_name,action_order,action_desc,action_reaction from actions where action_name='{name}'")
     action = cur.fetchone()
     if action:
-        await ctx.send(embed=make_action_embed(action))
+        action_m = await ctx.send(embed=make_action_embed(action))
+        await action_m.add_reaction(EXIT_EMOJI)
     else:
         await ctx.send("`No such action`")
 
